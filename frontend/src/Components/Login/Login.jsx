@@ -25,7 +25,7 @@ const Login = () => {
       // store auth in cookie
       Cookies.set('auth', 'true', { expires: 1 })
 
-      router.push('/')
+      router.push('/item')
     } else {
       setError('Invalid email or password')
     }
