@@ -22,7 +22,11 @@ export const metadata = {
   description: "Discover amazing products with great deals, fast delivery, and excellent customer service. Shop electronics, fashion, home goods and more at E-Shopping.",
   keywords: "online shopping, e-commerce, electronics, fashion, home goods, best deals, fast delivery",
   author: "E-Shopping Team",
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
