@@ -3,15 +3,19 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { postUser, uploadImage } from '../ReusableFunction/Upload'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { FcGoogle } from 'react-icons/fc'
 
 const SignUp = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { register, handleSubmit } = useForm()
+
+  // Get redirect parameter
+  const redirectTo = searchParams.get('redirect') || '/'
 
   const handelSign = async (data) => {
     setIsLoading(true)
@@ -29,7 +33,12 @@ const SignUp = () => {
         redirect: false,
       })
       if (result.acknowledged) {
-        router.push('/')
+        // Redirect to the intended page
+        if (redirectTo && redirectTo !== '/') {
+          router.push(redirectTo)
+        } else {
+          router.push('/')
+        }
       } else {
         setError('Registration failed. Please try again.')
       }
@@ -40,6 +49,12 @@ const SignUp = () => {
       setIsLoading(false)
     }
   }
+
+  const handleGoogleSignUp = () => {
+    const callbackUrl = redirectTo && redirectTo !== '/' ? redirectTo : '/'
+    signIn('google', { callbackUrl })
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
@@ -47,6 +62,13 @@ const SignUp = () => {
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800">Create Account</h2>
           <p className="text-gray-500 mt-1">Join us and start your journey</p>
+          {redirectTo && redirectTo !== '/' && (
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                🎯 You'll be redirected to <strong>{redirectTo.includes('/item/') ? 'Product Details' : 'Add Product'}</strong> after registration
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Error */}
@@ -133,20 +155,23 @@ const SignUp = () => {
             {isLoading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
+        
         <button
+          onClick={handleGoogleSignUp}
           disabled={isLoading}
           className="w-full py-2.5 rounded-lg text-white font-semibold
-            bg-green-600 hover:bg-green-700 mt-3 flex items-center gap-3 justify-center
+            bg-gray-400 hover:bg-gray-500 mt-3 flex items-center gap-3 justify-center
             transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <FcGoogle></FcGoogle>
-          {isLoading ? 'Creating Account...' : 'sign up with google'}
+          <FcGoogle />
+          {isLoading ? 'Creating Account...' : 'Sign up with Google'}
         </button>
+        
         {/* Footer */}
         <p className="text-center text-sm text-gray-600 mt-6">
           Already have an account?{' '}
           <Link
-            href="/login"
+            href={`/login${redirectTo && redirectTo !== '/' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
             className="text-green-600 font-semibold hover:underline"
           >
             Login

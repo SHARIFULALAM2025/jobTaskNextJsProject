@@ -1,7 +1,7 @@
 
 'use client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Cookies from 'js-cookie'
@@ -10,9 +10,14 @@ import { signIn } from 'next-auth/react'
 
 const Login = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { register, handleSubmit } = useForm()
+
+  // Get redirect parameters
+  const redirectTo = searchParams.get('redirect') || '/'
+  const fromPage = searchParams.get('from') || ''
 
   const handelLogin = async (data) => {
     setIsLoading(true)
@@ -25,12 +30,25 @@ const Login = () => {
       // store auth in cookie
       Cookies.set('auth', 'true', { expires: 1 })
 
-      router.push('/item')
+      // Dispatch custom event to notify navbar of auth change
+      window.dispatchEvent(new Event('authStateChanged'))
+
+      // Redirect to the intended page
+      if (redirectTo && redirectTo !== '/') {
+        router.push(redirectTo)
+      } else {
+        router.push('/')
+      }
     } else {
       setError('Invalid email or password')
     }
 
     setIsLoading(false)
+  }
+
+  const handleGoogleSignIn = () => {
+    const callbackUrl = redirectTo && redirectTo !== '/' ? redirectTo : '/'
+    signIn('google', { callbackUrl })
   }
 
   return (
@@ -39,8 +57,9 @@ const Login = () => {
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800">Welcome Back</h2>
           <p className="text-gray-500 mt-1">
-            Login to continue to your account
+            {fromPage ? `Login to access ${fromPage === '/item' ? 'Items' : 'the page'}` : 'Login to continue to your account'}
           </p>
+       
         </div>
 
         {error && (
@@ -88,10 +107,9 @@ const Login = () => {
         </form>
 
         <button
-          onClick={() => signIn('google', { callbackUrl: '/' })}
-
+          onClick={handleGoogleSignIn}
           className="w-full py-2.5 rounded-lg text-white font-semibold
-          bg-gray-400 mt-3 flex items-center gap-3 justify-center"
+          bg-gray-400 mt-3 flex items-center gap-3 justify-center hover:bg-gray-500 transition"
         >
           <FcGoogle />
           Sign in with Google
@@ -99,10 +117,20 @@ const Login = () => {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-green-600 font-semibold">
+          <Link 
+            href={`/register${redirectTo && redirectTo !== '/' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} 
+            className="text-green-600 font-semibold"
+          >
             Sign Up
           </Link>
         </p>
+
+        {/* Demo Credentials */}
+        <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="text-xs text-gray-600 font-medium mb-1">Demo Credentials:</p>
+          <p className="text-xs text-gray-500">Email: sharifullinkdin2025@gmail.com</p>
+          <p className="text-xs text-gray-500">Password: abc123</p>
+        </div>
       </div>
     </div>
   )
@@ -110,21 +138,3 @@ const Login = () => {
 
 export default Login
 
-/* // try {
-    //   const res = await signIn('credentials', {
-    //     email: data.email,
-    //     password: data.password,
-    //     redirect: false,
-    //   })
-
-    //   if (res.error) {
-    //     setError('Invalid email or password. Please try again.')
-    //   } else {
-    //     console.log('login successfully')
-    //     router.push('/')
-    //   }
-    // } catch (err) {
-    //   setError('An error occurred during login. Please try again.')
-    // } finally {
-    //   setIsLoading(false)
-    // } */

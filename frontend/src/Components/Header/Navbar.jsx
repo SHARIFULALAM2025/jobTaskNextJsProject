@@ -5,15 +5,16 @@ import Cookies from 'js-cookie'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import ProtectedLink from '@/Components/ProtectedLink/ProtectedLink'
 
 const navData = [
-  { Name: 'Home', path: '/' },
-  {Name:"item",path:"/item"},
-  { Name: 'Categories', path: '/categories' },
-  { Name: 'Best Sellers', path: '/best-sellers' },
-  { Name: 'New Arrivals', path: '/new-arrivals' },
-  { Name: 'Contact', path: '/contact' },
-  { Name: 'Add Product', path: '/product' },
+  { Name: 'Home', path: '/', protected: false },
+  { Name: 'Items', path: '/item', protected: false },
+  { Name: 'Categories', path: '/categories', protected: true },
+  { Name: 'Best Sellers', path: '/best-sellers', protected: true },
+  { Name: 'New Arrivals', path: '/new-arrivals', protected: true },
+  { Name: 'Contact', path: '/contact', protected: true },
+  { Name: 'Add Product', path: '/product', protected: true },
 ]
 
 const Navbar = () => {
@@ -26,11 +27,37 @@ const Navbar = () => {
   useEffect(() => {
     const auth = Cookies.get('auth')
     setIsAuth(!!auth)
-  }, [])
+
+    // Listen for auth changes
+    const handleAuthChange = () => {
+      const auth = Cookies.get('auth')
+      setIsAuth(!!auth)
+    }
+
+    // Listen for custom auth events
+    window.addEventListener('authStateChanged', handleAuthChange)
+    
+    // Also listen for storage changes (in case cookies are modified)
+    const interval = setInterval(() => {
+      const auth = Cookies.get('auth')
+      if (!!auth !== isAuth) {
+        setIsAuth(!!auth)
+      }
+    }, 1000)
+
+    return () => {
+      window.removeEventListener('authStateChanged', handleAuthChange)
+      clearInterval(interval)
+    }
+  }, [isAuth])
 
   const handleLogout = () => {
     Cookies.remove('auth')
     setIsAuth(false)
+    
+    // Dispatch custom event to notify other components of auth change
+    window.dispatchEvent(new Event('authStateChanged'))
+    
     if (session) signOut({ callbackUrl: '/' })
     else router.push('/login')
   }
@@ -54,14 +81,15 @@ const Navbar = () => {
           {/* Desktop Navigation - Hidden on mobile/tablet */}
           <div className="hidden xl:flex items-center space-x-8">
             {navData.map((item, index) => (
-              <Link 
+              <ProtectedLink 
                 key={index}
                 href={item.path}
+                requireAuth={item.protected}
                 className="text-gray-700 hover:text-green-600 font-medium transition-colors duration-200 relative group whitespace-nowrap"
               >
                 {item.Name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-600 transition-all duration-200 group-hover:w-full"></span>
-              </Link>
+              </ProtectedLink>
             ))}
           </div>
 
@@ -149,14 +177,15 @@ const Navbar = () => {
           <div className="py-4 space-y-1">
             {/* Mobile Navigation Links */}
             {navData.map((item, index) => (
-              <Link 
+              <ProtectedLink 
                 key={index}
                 href={item.path}
+                requireAuth={item.protected}
                 className="block px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-lg transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {item.Name}
-              </Link>
+              </ProtectedLink>
             ))}
             
             {/* Mobile Search */}

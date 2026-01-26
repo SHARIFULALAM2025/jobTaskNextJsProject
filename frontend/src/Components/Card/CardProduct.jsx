@@ -2,15 +2,11 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import ProtectedButton from '../ProtectedButton/ProtectedButton'
 
 const CardProduct = () => {
-    const router=useRouter()
-    const handelView = (id) => {
-        router.push(`/item/${id}`)
-    }
-  const [products, setProducts] = useState([]) // ডাটা রাখার জন্য
-  const [loading, setLoading] = useState(true) // লোডিং দেখানোর জন্য
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -58,9 +54,12 @@ const CardProduct = () => {
             <span className="text-2xl font-bold text-blue-600">
               ${item.price}
             </span>
-            <button onClick={()=>handelView(item._id)} className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800">
+            <ProtectedButton 
+              href={`/item/${item._id}`}
+              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+            >
               View Details
-            </button>
+            </ProtectedButton>
           </div>
         </div>
       ))}

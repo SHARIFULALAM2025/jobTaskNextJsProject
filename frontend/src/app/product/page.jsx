@@ -1,11 +1,12 @@
 import AddProduct from '@/Components/AddProduct/AddProduct';
+import ProtectedRoute from '@/Components/ProtectedRoute/ProtectedRoute';
 import React from 'react';
 
 const Product = () => {
     return (
-        <div>
-            <AddProduct></AddProduct>
-        </div>
+        <ProtectedRoute>
+            <AddProduct />
+        </ProtectedRoute>
     );
 };
 
